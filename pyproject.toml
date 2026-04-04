@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hand-gesture-recognition"
+version = "0.1.0"
+description = "Static and dynamic hand gesture recognition: MediaPipe keypoints, MLP / graph network / causal TCN, compared with an end-to-end YOLO detector on HaGRID."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Kacper Pawlowski" }]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.9",
+    "pyyaml>=6",
+    "requests>=2.31",
+    "torch>=2.3",
+    "mediapipe>=0.10.14",
+]
+
+[project.optional-dependencies]
+train = ["tensorboard>=2.16", "ultralytics>=8.4", "onnx>=1.16", "onnxscript>=0.3", "onnxruntime>=1.18"]
+dev = ["hand-gesture-recognition[train]", "pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+hg-prepare = "hand_gestures.data.hagrid:main"
+hg-prepare-images = "hand_gestures.data.hagrid_images:main"
+hg-train-static = "hand_gestures.train_static:main"
+hg-train-dynamic = "hand_gestures.train_dynamic:main"
+hg-train-detector = "hand_gestures.train_detector:main"
+hg-compare = "hand_gestures.compare:main"
+hg-demo = "hand_gestures.demo:main"
+hg-record = "hand_gestures.record:main"
+hg-export = "hand_gestures.export:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "NPY"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

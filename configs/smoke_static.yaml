@@ -1,0 +1,9 @@
+# Tiny CPU run (used by the tests).
+name: smoke_static
+device: cpu
+data:
+  batch_size: 32
+  num_workers: 0
+optim:
+  epochs: 1
+  warmup_epochs: 0

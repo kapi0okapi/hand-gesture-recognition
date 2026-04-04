@@ -1,0 +1,48 @@
+# Slurm cluster settings and job definitions, rendered by slurm/generate.py.
+# Put your account in slurm/cluster.local.toml (not committed):  [cluster]  account = "..."
+# Downloads need internet: run scripts/download.sh on a login node first.
+# Find your Slurm account with:  sacctmgr show assoc format=Account%20,User,QOS | grep $USER
+
+[cluster]
+account = "CHANGE_ME"   # overridden by slurm/cluster.local.toml
+python_module = "Python/3.11.3-GCCcore-12.3.0"   # module spider Python
+venv = "/cluster/work/$USER/venvs/hand-gesture-recognition"
+workdir = "/cluster/work/$USER/hand-gesture-recognition"   # $DATA = workdir/data, $RUNS = workdir/runs
+mail_user = ""
+
+[cluster.env]
+YOLO_OFFLINE = "1"
+
+[defaults]
+partition = "GPUQ"
+time = "0-06:00:00"
+cpus = 16          # landmark augmentation runs in DataLoader workers
+mem = "32G"
+gpus = 1
+constraint = "gpu32g|gpu40g|gpu80g"   # V100 32 GB, A100, H100 (setup_cluster.sh installs PyTorch for CUDA 12.6)
+
+[jobs.train-static]
+description = "Static gesture classifiers on ~1M HaGRID hands (array: MLP, graph network)"
+checkpoint_signal = true
+command = "python -m hand_gestures.train_static $ARRAY_ARGS"
+array = ["--config configs/static_mlp.yaml", "--config configs/static_gcn.yaml"]
+
+[jobs.train-dynamic]
+description = "Dynamic gestures on synthetic sequences (array: causal TCN, GRU)"
+checkpoint_signal = true
+command = "python -m hand_gestures.train_dynamic $ARRAY_ARGS"
+array = ["--config configs/dynamic_tcn.yaml", "--config configs/dynamic_tcn.yaml --set model=gru --set name=dynamic_gru"]
+
+[jobs.train-detector]
+description = "End-to-end YOLO26s gesture detector on the HaGRID photo subset"
+time = "0-12:00:00"
+command = "python -m hand_gestures.train_detector --data $DATA/hagrid_yolo/data.yaml --model yolo26s.pt --name yolo_hagrid"
+
+[jobs.compare]
+description = "Keypoints + classifier vs. YOLO detector on held-out people, both on the CPU (fair latency)"
+partition = "CPUQ"
+gpus = 0
+constraint = ""
+time = "0-01:00:00"
+cpus = 8
+command = "python -m hand_gestures.compare --data $DATA/hagrid_yolo --static $RUNS/static_mlp/best.pt --yolo $RUNS/yolo_hagrid/weights/best.pt --out $RUNS/comparison.json"

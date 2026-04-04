@@ -1,0 +1,9 @@
+# Causal TCN on synthetic dynamic gestures animated from real HaGRID hand shapes.
+name: dynamic_tcn
+model: tcn
+epochs: 30
+data:
+  landmarks: ${DATA}/hagrid/landmarks.npz
+  train_size: 50000
+  num_workers: 16
+  recordings: ""      # e.g. ${DATA}/recordings.npz from hg-record
